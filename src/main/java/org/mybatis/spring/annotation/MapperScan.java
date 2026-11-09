@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,20 +27,19 @@ import org.mybatis.spring.mapper.MapperFactoryBean;
 import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanNameGenerator;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.AliasFor;
 
 /**
  * Use this annotation to register MyBatis mapper interfaces when using Java Config. It performs when same work as
  * {@link MapperScannerConfigurer} via {@link MapperScannerRegistrar}.
- *
  * <p>
  * Either {@link #basePackageClasses} or {@link #basePackages} (or its alias {@link #value}) may be specified to define
  * specific packages to scan. Since 2.0.4, If specific packages are not defined, scanning will occur from the package of
  * the class that declares this annotation.
- *
  * <p>
  * Configuration example:
- * </p>
  *
  * <pre class="code">
  * &#064;Configuration
@@ -68,8 +67,10 @@ import org.springframework.context.annotation.Import;
  *
  * @author Michael Lanyon
  * @author Eduardo Macarron
+ * @author Qimiao Chen
  *
  * @since 1.2.0
+ *
  * @see MapperScannerRegistrar
  * @see MapperFactoryBean
  */
@@ -86,6 +87,7 @@ public @interface MapperScan {
    *
    * @return base package names
    */
+  @AliasFor("basePackages")
   String[] value() default {};
 
   /**
@@ -94,6 +96,7 @@ public @interface MapperScan {
    *
    * @return base package names for scanning mapper interface
    */
+  @AliasFor("value")
   String[] basePackages() default {};
 
   /**
@@ -162,25 +165,42 @@ public @interface MapperScan {
 
   /**
    * Whether enable lazy initialization of mapper bean.
-   *
    * <p>
    * Default is {@code false}.
-   * </p>
    *
    * @return set {@code true} to enable lazy initialization
+   *
    * @since 2.0.2
    */
   String lazyInitialization() default "";
 
   /**
    * Specifies the default scope of scanned mappers.
-   *
    * <p>
    * Default is {@code ""} (equiv to singleton).
-   * </p>
    *
    * @return the default scope
    */
   String defaultScope() default AbstractBeanDefinition.SCOPE_DEFAULT;
+
+  /**
+   * Specifies a flag that whether execute a property placeholder processing or not.
+   * <p>
+   * The default is {@literal true}. This means that a property placeholder processing execute.
+   *
+   * @since 3.0.3
+   *
+   * @return a flag that whether execute a property placeholder processing or not
+   */
+  boolean processPropertyPlaceHolders() default true;
+
+  /**
+   * Specifies which types are not eligible for mapper scanning.
+   *
+   * @since 3.0.4
+   *
+   * @return array of customized mapper excludeFilter
+   */
+  ComponentScan.Filter[] excludeFilters() default {};
 
 }

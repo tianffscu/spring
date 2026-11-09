@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,20 +20,26 @@ import static org.springframework.util.ClassUtils.getShortName;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.batch.item.database.AbstractPagingItemReader;
+import org.springframework.batch.infrastructure.item.database.AbstractPagingItemReader;
 
 /**
- * {@code org.springframework.batch.item.ItemReader} for reading database records using MyBatis in a paging fashion.
+ * {@code org.springframework.batch.infrastructure.item.ItemReader} for reading database records using MyBatis in a
+ * paging fashion.
  * <p>
  * Provided to facilitate the migration from Spring-Batch iBATIS 2 page item readers to MyBatis 3.
  *
  * @author Eduardo Macarron
+ *
+ * @param <T>
+ *          the generic type
  *
  * @since 1.1.0
  */
@@ -47,6 +53,11 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 
   private Map<String, Object> parameterValues;
 
+  private Supplier<Map<String, Object>> parameterValuesSupplier;
+
+  /**
+   * Instantiates a new my batis paging item reader.
+   */
   public MyBatisPagingItemReader() {
     setName(getShortName(MyBatisPagingItemReader.class));
   }
@@ -82,6 +93,18 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   }
 
   /**
+   * The parameter supplier used to get parameter values for the query execution.
+   *
+   * @param parameterValuesSupplier
+   *          the supplier used to get values keyed by the parameter named used in the query string.
+   *
+   * @since 2.1.0
+   */
+  public void setParameterValuesSupplier(Supplier<Map<String, Object>> parameterValuesSupplier) {
+    this.parameterValuesSupplier = parameterValuesSupplier;
+  }
+
+  /**
    * Check mandatory properties.
    *
    * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
@@ -102,6 +125,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
     if (parameterValues != null) {
       parameters.putAll(parameterValues);
     }
+    Optional.ofNullable(parameterValuesSupplier).map(Supplier::get).ifPresent(parameters::putAll);
     parameters.put("_page", getPage());
     parameters.put("_pagesize", getPageSize());
     parameters.put("_skiprows", getPage() * getPageSize());
@@ -111,11 +135,6 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
       results.clear();
     }
     results.addAll(sqlSessionTemplate.selectList(queryId, parameters));
-  }
-
-  @Override
-  protected void doJumpToPage(int itemIndex) {
-    // Not Implemented
   }
 
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,7 +27,6 @@ import org.springframework.dao.support.DaoSupport;
  * be used to execute SQL methods.
  * <p>
  * This class needs a SqlSessionTemplate or a SqlSessionFactory. If both are set the SqlSessionFactory will be ignored.
- * <p>
  *
  * @author Putthiphong Boonphong
  * @author Eduardo Macarron
@@ -62,7 +61,9 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
    *
    * @param sqlSessionFactory
    *          the MyBatis SqlSessionFactory to create a SqlSessionTemplate for
+   *
    * @return the new SqlSessionTemplate instance
+   *
    * @see #setSqlSessionFactory
    */
   @SuppressWarnings("WeakerAccess")
@@ -76,7 +77,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
    * @return a factory of SqlSession
    */
   public final SqlSessionFactory getSqlSessionFactory() {
-    return (this.sqlSessionTemplate != null ? this.sqlSessionTemplate.getSqlSessionFactory() : null);
+    return this.sqlSessionTemplate != null ? this.sqlSessionTemplate.getSqlSessionFactory() : null;
   }
 
   /**
@@ -84,6 +85,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
    *
    * @param sqlSessionTemplate
    *          a template of SqlSession
+   *
    * @see #setSqlSessionFactory
    */
   public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
@@ -114,9 +116,6 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
     return this.sqlSessionTemplate;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void checkDaoConfig() {
     notNull(this.sqlSessionTemplate, "Property 'sqlSessionFactory' or 'sqlSessionTemplate' are required");

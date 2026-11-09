@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,18 +18,16 @@ package org.mybatis.spring;
 import static org.springframework.util.Assert.notNull;
 
 import org.apache.ibatis.exceptions.PersistenceException;
-import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.logging.Logger;
 import org.mybatis.logging.LoggerFactory;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
@@ -60,13 +58,15 @@ public final class SqlSessionUtils {
    *
    * @param sessionFactory
    *          a MyBatis {@code SqlSessionFactory} to create new sessions
+   *
    * @return a MyBatis {@code SqlSession}
+   *
    * @throws TransientDataAccessResourceException
    *           if a transaction is active and the {@code SqlSessionFactory} is not using a
    *           {@code SpringManagedTransactionFactory}
    */
   public static SqlSession getSqlSession(SqlSessionFactory sessionFactory) {
-    ExecutorType executorType = sessionFactory.getConfiguration().getDefaultExecutorType();
+    var executorType = sessionFactory.getConfiguration().getDefaultExecutorType();
     return getSqlSession(sessionFactory, executorType, null);
   }
 
@@ -82,10 +82,13 @@ public final class SqlSessionUtils {
    *          The executor type of the SqlSession to create
    * @param exceptionTranslator
    *          Optional. Translates SqlSession.commit() exceptions to Spring exceptions.
+   *
    * @return an SqlSession managed by Spring Transaction Manager
+   *
    * @throws TransientDataAccessResourceException
    *           if a transaction is active and the {@code SqlSessionFactory} is not using a
    *           {@code SpringManagedTransactionFactory}
+   *
    * @see SpringManagedTransactionFactory
    */
   public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, ExecutorType executorType,
@@ -94,9 +97,9 @@ public final class SqlSessionUtils {
     notNull(sessionFactory, NO_SQL_SESSION_FACTORY_SPECIFIED);
     notNull(executorType, NO_EXECUTOR_TYPE_SPECIFIED);
 
-    SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
+    var holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
-    SqlSession session = sessionHolder(executorType, holder);
+    var session = sessionHolder(executorType, holder);
     if (session != null) {
       return session;
     }
@@ -111,7 +114,7 @@ public final class SqlSessionUtils {
 
   /**
    * Register session holder if synchronization is active (i.e. a Spring TX is active).
-   *
+   * <p>
    * Note: The DataSource used by the Environment should be synchronized with the transaction either through
    * DataSourceTxMgr or another tx synchronization. Further assume that if an exception is thrown, whatever started the
    * transaction will handle closing / rolling back the Connection associated with the SqlSession.
@@ -129,7 +132,7 @@ public final class SqlSessionUtils {
       PersistenceExceptionTranslator exceptionTranslator, SqlSession session) {
     SqlSessionHolder holder;
     if (TransactionSynchronizationManager.isSynchronizationActive()) {
-      Environment environment = sessionFactory.getConfiguration().getEnvironment();
+      var environment = sessionFactory.getConfiguration().getEnvironment();
 
       if (environment.getTransactionFactory() instanceof SpringManagedTransactionFactory) {
         LOGGER.debug(() -> "Registering transaction synchronization for SqlSession [" + session + "]");
@@ -140,14 +143,12 @@ public final class SqlSessionUtils {
             .registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
         holder.setSynchronizedWithTransaction(true);
         holder.requested();
+      } else if (TransactionSynchronizationManager.getResource(environment.getDataSource()) == null) {
+        LOGGER.debug(() -> "SqlSession [" + session
+            + "] was not registered for synchronization because DataSource is not transactional");
       } else {
-        if (TransactionSynchronizationManager.getResource(environment.getDataSource()) == null) {
-          LOGGER.debug(() -> "SqlSession [" + session
-              + "] was not registered for synchronization because DataSource is not transactional");
-        } else {
-          throw new TransientDataAccessResourceException(
-              "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
-        }
+        throw new TransientDataAccessResourceException(
+            "SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use Spring transaction synchronization");
       }
     } else {
       LOGGER.debug(() -> "SqlSession [" + session
@@ -186,8 +187,8 @@ public final class SqlSessionUtils {
     notNull(session, NO_SQL_SESSION_SPECIFIED);
     notNull(sessionFactory, NO_SQL_SESSION_FACTORY_SPECIFIED);
 
-    SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
-    if ((holder != null) && (holder.getSqlSession() == session)) {
+    var holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
+    if (holder != null && holder.getSqlSession() == session) {
       LOGGER.debug(() -> "Releasing transactional SqlSession [" + session + "]");
       holder.released();
     } else {
@@ -203,15 +204,16 @@ public final class SqlSessionUtils {
    *          a MyBatis SqlSession to check
    * @param sessionFactory
    *          the SqlSessionFactory which the SqlSession was built with
+   *
    * @return true if session is transactional, otherwise false
    */
   public static boolean isSqlSessionTransactional(SqlSession session, SqlSessionFactory sessionFactory) {
     notNull(session, NO_SQL_SESSION_SPECIFIED);
     notNull(sessionFactory, NO_SQL_SESSION_FACTORY_SPECIFIED);
 
-    SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
+    var holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
 
-    return (holder != null) && (holder.getSqlSession() == session);
+    return holder != null && holder.getSqlSession() == session;
   }
 
   /**
@@ -219,7 +221,7 @@ public final class SqlSessionUtils {
    * {@code SqlSession}. It assumes that {@code Connection} life cycle will be managed by
    * {@code DataSourceTransactionManager} or {@code JtaTransactionManager}
    */
-  private static final class SqlSessionSynchronization extends TransactionSynchronizationAdapter {
+  private static final class SqlSessionSynchronization implements TransactionSynchronization {
 
     private final SqlSessionHolder holder;
 
@@ -235,18 +237,12 @@ public final class SqlSessionUtils {
       this.sessionFactory = sessionFactory;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public int getOrder() {
       // order right before any Connection synchronization
       return DataSourceUtils.CONNECTION_SYNCHRONIZATION_ORDER - 1;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void suspend() {
       if (this.holderActive) {
@@ -255,9 +251,6 @@ public final class SqlSessionUtils {
       }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void resume() {
       if (this.holderActive) {
@@ -266,9 +259,6 @@ public final class SqlSessionUtils {
       }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void beforeCommit(boolean readOnly) {
       // Connection commit or rollback will be handled by ConnectionSynchronization or
@@ -283,8 +273,7 @@ public final class SqlSessionUtils {
           this.holder.getSqlSession().commit();
         } catch (PersistenceException p) {
           if (this.holder.getPersistenceExceptionTranslator() != null) {
-            DataAccessException translated = this.holder.getPersistenceExceptionTranslator()
-                .translateExceptionIfPossible(p);
+            var translated = this.holder.getPersistenceExceptionTranslator().translateExceptionIfPossible(p);
             if (translated != null) {
               throw translated;
             }
@@ -294,9 +283,6 @@ public final class SqlSessionUtils {
       }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void beforeCompletion() {
       // Issue #18 Close SqlSession and deregister it now
@@ -311,9 +297,6 @@ public final class SqlSessionUtils {
       }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void afterCompletion(int status) {
       if (this.holderActive) {

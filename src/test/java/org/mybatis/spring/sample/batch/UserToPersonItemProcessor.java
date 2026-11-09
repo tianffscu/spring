@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,18 +17,17 @@ package org.mybatis.spring.sample.batch;
 
 import org.mybatis.spring.sample.domain.Person;
 import org.mybatis.spring.sample.domain.User;
-import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.infrastructure.item.ItemProcessor;
 
 public class UserToPersonItemProcessor implements ItemProcessor<User, Person> {
 
   @Override
   public Person process(final User user) throws Exception {
-    final String[] names = user.getName().split(" ");
+    final var names = user.getName().split(" ");
     if (names.length == 1) {
       return new Person(names[0], null);
-    } else {
-      return new Person(names[0], names[1]);
     }
+    return new Person(names[0], names[1]);
   }
 
 }

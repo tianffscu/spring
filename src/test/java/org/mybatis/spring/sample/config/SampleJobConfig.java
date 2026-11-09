@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,12 +31,15 @@ import org.mybatis.spring.batch.builder.MyBatisCursorItemReaderBuilder;
 import org.mybatis.spring.sample.batch.UserToPersonItemProcessor;
 import org.mybatis.spring.sample.domain.Person;
 import org.mybatis.spring.sample.domain.User;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.Step;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.infrastructure.item.ItemProcessor;
+import org.springframework.batch.infrastructure.item.ItemReader;
+import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -50,12 +53,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableBatchProcessing
 public class SampleJobConfig {
 
-  @Autowired
-  private JobBuilderFactory jobBuilderFactory;
-
-  @Autowired
-  private StepBuilderFactory stepBuilderFactory;
-
   @Bean
   public DataSource dataSource() {
     return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.HSQL)
@@ -66,30 +63,30 @@ public class SampleJobConfig {
   }
 
   @Bean
-  public PlatformTransactionManager transactionalManager() {
-    return new DataSourceTransactionManager(dataSource());
+  public PlatformTransactionManager transactionManager(DataSource dataSource) {
+    return new DataSourceTransactionManager(dataSource);
   }
 
   @Bean
-  public SqlSessionFactory sqlSessionFactory() throws Exception {
-    PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
-    SqlSessionFactoryBean ss = new SqlSessionFactoryBean();
-    ss.setDataSource(dataSource());
+  public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
+    var resourcePatternResolver = new PathMatchingResourcePatternResolver();
+    var ss = new SqlSessionFactoryBean();
+    ss.setDataSource(dataSource);
     ss.setMapperLocations(resourcePatternResolver.getResources("org/mybatis/spring/sample/mapper/*.xml"));
-    org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
+    var configuration = new org.apache.ibatis.session.Configuration();
     configuration.setDefaultExecutorType(ExecutorType.BATCH);
     ss.setConfiguration(configuration);
     return ss.getObject();
   }
 
   @Bean
-  public MyBatisCursorItemReader<User> reader() throws Exception {
+  public MyBatisCursorItemReader<User> reader(SqlSessionFactory sqlSessionFactory) {
     // @formatter:off
-    return new MyBatisCursorItemReaderBuilder<User>()
-        .sqlSessionFactory(sqlSessionFactory())
-        .queryId("org.mybatis.spring.sample.mapper.UserMapper.getUsers")
-        .build();
-    // @formatter:on
+        return new MyBatisCursorItemReaderBuilder<User>()
+                .sqlSessionFactory(sqlSessionFactory)
+                .queryId("org.mybatis.spring.sample.mapper.UserMapper.getUsers")
+                .build();
+        // @formatter:on
   }
 
   @Bean
@@ -98,14 +95,14 @@ public class SampleJobConfig {
   }
 
   @Bean
-  public MyBatisBatchItemWriter<Person> writer() throws Exception {
+  public MyBatisBatchItemWriter<Person> writer(SqlSessionFactory sqlSessionFactory) {
     // @formatter:off
-    return new MyBatisBatchItemWriterBuilder<Person>()
-        .sqlSessionFactory(sqlSessionFactory())
-        .statementId("org.mybatis.spring.sample.mapper.PersonMapper.createPerson")
-        .itemToParameterConverter(createItemToParameterMapConverter("batch_java_config_user", LocalDateTime.now()))
-        .build();
-    // @formatter:on
+        return new MyBatisBatchItemWriterBuilder<Person>()
+                .sqlSessionFactory(sqlSessionFactory)
+                .statementId("org.mybatis.spring.sample.mapper.PersonMapper.createPerson")
+                .itemToParameterConverter(createItemToParameterMapConverter("batch_java_config_user", LocalDateTime.now()))
+                .build();
+        // @formatter:on
   }
 
   public static <T> Converter<T, Map<String, Object>> createItemToParameterMapConverter(String operationBy,
@@ -120,26 +117,26 @@ public class SampleJobConfig {
   }
 
   @Bean
-  public Job importUserJob() throws Exception {
+  public Job importUserJob(JobRepository jobRepository, Step step1) {
     // @formatter:off
-    return jobBuilderFactory.get("importUserJob")
-        .flow(step1())
-        .end()
-        .build();
-    // @formatter:on
+        return new JobBuilder("importUserJob", jobRepository)
+                .flow(step1)
+                .end()
+                .build();
+        // @formatter:on
   }
 
   @Bean
-  public Step step1() throws Exception {
+  public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager, ItemReader<User> reader,
+      ItemProcessor<User, Person> processor, ItemWriter<Person> writer) {
     // @formatter:off
-    return stepBuilderFactory.get("step1")
-        .transactionManager(transactionalManager())
-        .<User, Person>chunk(10)
-        .reader(reader())
-        .processor(processor())
-        .writer(writer())
-        .build();
-    // @formatter:on
+        return new StepBuilder("step1", jobRepository)
+                .<User, Person>chunk(10, transactionManager)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .build();
+        // @formatter:on
   }
 
 }

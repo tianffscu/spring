@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,16 +18,14 @@ package org.mybatis.spring.batch;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.notNull;
 
-import java.util.List;
-
-import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.logging.Logger;
 import org.mybatis.logging.LoggerFactory;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.infrastructure.item.Chunk;
+import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -41,13 +39,16 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
  * <p>
  * The user must provide a MyBatis statement id that points to the SQL statement defined in the MyBatis.
  * <p>
- * It is expected that {@link #write(List)} is called inside a transaction. If it is not each statement call will be
+ * It is expected that {@link #write(Chunk)} is called inside a transaction. If it is not each statement call will be
  * autocommitted and flushStatements will return no results.
  * <p>
  * The writer is thread safe after its properties are set (normal singleton behavior), so it can be used to write in
  * multiple concurrent transactions.
  *
  * @author Eduardo Macarron
+ *
+ * @param <T>
+ *          the generic type
  *
  * @since 1.1.0
  */
@@ -113,6 +114,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
    *
    * @param itemToParameterConverter
    *          a converter that converting item to parameter object
+   *
    * @since 2.0.0
    */
   public void setItemToParameterConverter(Converter<T, ?> itemToParameterConverter) {
@@ -131,11 +133,8 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
     notNull(itemToParameterConverter, "A itemToParameterConverter is required.");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
-  public void write(final List<? extends T> items) {
+  public void write(final Chunk<? extends T> items) {
 
     if (!items.isEmpty()) {
       LOGGER.debug(() -> "Executing batch with " + items.size() + " items.");
@@ -144,7 +143,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
         sqlSessionTemplate.update(statementId, itemToParameterConverter.convert(item));
       }
 
-      List<BatchResult> results = sqlSessionTemplate.flushStatements();
+      var results = sqlSessionTemplate.flushStatements();
 
       if (assertUpdates) {
         if (results.size() != 1) {
@@ -152,13 +151,13 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
               + "Expected 1 but number of BatchResult objects returned was " + results.size());
         }
 
-        int[] updateCounts = results.get(0).getUpdateCounts();
+        var updateCounts = results.get(0).getUpdateCounts();
 
-        for (int i = 0; i < updateCounts.length; i++) {
-          int value = updateCounts[i];
+        for (var i = 0; i < updateCounts.length; i++) {
+          var value = updateCounts[i];
           if (value == 0) {
-            throw new EmptyResultDataAccessException(
-                "Item " + i + " of " + updateCounts.length + " did not update any rows: [" + items.get(i) + "]", 1);
+            throw new EmptyResultDataAccessException("Item " + i + " of " + updateCounts.length
+                + " did not update any rows: [" + items.getItems().get(i) + "]", 1);
           }
         }
       }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -53,14 +53,17 @@ public class SpringManagedTransaction implements Transaction {
 
   private boolean autoCommit;
 
+  /**
+   * Instantiates a new spring managed transaction.
+   *
+   * @param dataSource
+   *          the data source
+   */
   public SpringManagedTransaction(DataSource dataSource) {
     notNull(dataSource, "No DataSource specified");
     this.dataSource = dataSource;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public Connection getConnection() throws SQLException {
     if (this.connection == null) {
@@ -79,15 +82,15 @@ public class SpringManagedTransaction implements Transaction {
   private void openConnection() throws SQLException {
     this.connection = DataSourceUtils.getConnection(this.dataSource);
     this.autoCommit = this.connection.getAutoCommit();
-    this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.connection, this.dataSource);
+
+    boolean isInActiveTransaction = TransactionSynchronizationManager.isActualTransactionActive();
+    this.isConnectionTransactional = isInActiveTransaction
+        && DataSourceUtils.isConnectionTransactional(this.connection, this.dataSource);
 
     LOGGER.debug(() -> "JDBC Connection [" + this.connection + "] will"
         + (this.isConnectionTransactional ? " " : " not ") + "be managed by Spring");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void commit() throws SQLException {
     if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
@@ -96,9 +99,6 @@ public class SpringManagedTransaction implements Transaction {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void rollback() throws SQLException {
     if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
@@ -107,20 +107,14 @@ public class SpringManagedTransaction implements Transaction {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void close() throws SQLException {
     DataSourceUtils.releaseConnection(this.connection, this.dataSource);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public Integer getTimeout() throws SQLException {
-    ConnectionHolder holder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
+    var holder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
     if (holder != null && holder.hasTimeout()) {
       return holder.getTimeToLiveInSeconds();
     }

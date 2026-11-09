@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,14 +15,12 @@
  */
 package org.mybatis.spring.batch;
 
-import static org.assertj.core.api.Assertions.*;
-
-import java.util.ArrayList;
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.batch.domain.Employee;
+import org.springframework.batch.infrastructure.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -56,8 +54,8 @@ class SpringBatchTest {
   @Test
   @Transactional
   void shouldDuplicateSalaryOfAllEmployees() throws Exception {
-    List<Employee> employees = new ArrayList<>();
-    Employee employee = pagingNoNestedItemReader.read();
+    var employees = new Chunk<Employee>();
+    var employee = pagingNoNestedItemReader.read();
     while (employee != null) {
       employee.setSalary(employee.getSalary() * 2);
       employees.add(employee);
@@ -73,8 +71,8 @@ class SpringBatchTest {
   @Transactional
   void checkPagingReadingWithNestedInResultMap() throws Exception {
     // This test is here to show that PagingReader can return wrong result in case of nested result maps
-    List<Employee> employees = new ArrayList<>();
-    Employee employee = pagingNestedItemReader.read();
+    var employees = new Chunk<Employee>();
+    var employee = pagingNestedItemReader.read();
     while (employee != null) {
       employee.setSalary(employee.getSalary() * 2);
       employees.add(employee);
@@ -91,8 +89,8 @@ class SpringBatchTest {
   void checkCursorReadingWithoutNestedInResultMap() throws Exception {
     cursorNoNestedItemReader.doOpen();
     try {
-      List<Employee> employees = new ArrayList<>();
-      Employee employee = cursorNoNestedItemReader.read();
+      var employees = new Chunk<Employee>();
+      var employee = cursorNoNestedItemReader.read();
       while (employee != null) {
         employee.setSalary(employee.getSalary() * 2);
         employees.add(employee);
@@ -112,8 +110,8 @@ class SpringBatchTest {
   void checkCursorReadingWithNestedInResultMap() throws Exception {
     cursorNestedItemReader.doOpen();
     try {
-      List<Employee> employees = new ArrayList<>();
-      Employee employee = cursorNestedItemReader.read();
+      var employees = new Chunk<Employee>();
+      var employee = cursorNestedItemReader.read();
       while (employee != null) {
         employee.setSalary(employee.getSalary() * 2);
         employees.add(employee);

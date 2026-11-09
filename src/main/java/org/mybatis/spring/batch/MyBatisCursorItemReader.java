@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,16 +21,23 @@ import static org.springframework.util.ClassUtils.getShortName;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader;
+import org.springframework.batch.infrastructure.item.support.AbstractItemCountingItemStreamItemReader;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
+ * {@code ItemReader} that uses MyBatis Cursor to read data.
+ *
  * @author Guillaume Darmont / guillaume@dropinocean.com
+ *
+ * @param <T>
+ *          the generic type
  */
 public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamItemReader<T>
     implements InitializingBean {
@@ -41,10 +48,14 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
   private SqlSession sqlSession;
 
   private Map<String, Object> parameterValues;
+  private Supplier<Map<String, Object>> parameterValuesSupplier;
 
   private Cursor<T> cursor;
   private Iterator<T> cursorIterator;
 
+  /**
+   * Instantiates a new my batis cursor item reader.
+   */
   public MyBatisCursorItemReader() {
     setName(getShortName(MyBatisCursorItemReader.class));
   }
@@ -64,6 +75,8 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
     if (parameterValues != null) {
       parameters.putAll(parameterValues);
     }
+
+    Optional.ofNullable(parameterValuesSupplier).map(Supplier::get).ifPresent(parameters::putAll);
 
     sqlSession = sqlSessionFactory.openSession(ExecutorType.SIMPLE);
     cursor = sqlSession.selectCursor(queryId, parameters);
@@ -120,5 +133,17 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
    */
   public void setParameterValues(Map<String, Object> parameterValues) {
     this.parameterValues = parameterValues;
+  }
+
+  /**
+   * The parameter supplier used to get parameter values for the query execution.
+   *
+   * @param parameterValuesSupplier
+   *          the supplier used to get values keyed by the parameter named used in the query string.
+   *
+   * @since 2.1.0
+   */
+  public void setParameterValuesSupplier(Supplier<Map<String, Object>> parameterValuesSupplier) {
+    this.parameterValuesSupplier = parameterValuesSupplier;
   }
 }

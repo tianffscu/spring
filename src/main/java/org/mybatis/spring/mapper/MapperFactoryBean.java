@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package org.mybatis.spring.mapper;
 import static org.springframework.util.Assert.notNull;
 
 import org.apache.ibatis.executor.ErrorContext;
-import org.apache.ibatis.session.Configuration;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.beans.factory.FactoryBean;
@@ -49,6 +48,9 @@ import org.springframework.beans.factory.FactoryBean;
  *
  * @author Eduardo Macarron
  *
+ * @param <T>
+ *          the generic type
+ *
  * @see SqlSessionTemplate
  */
 public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements FactoryBean<T> {
@@ -57,24 +59,30 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
 
   private boolean addToConfig = true;
 
+  /**
+   * Instantiates a new mapper factory bean.
+   */
   public MapperFactoryBean() {
     // intentionally empty
   }
 
+  /**
+   * Instantiates a new mapper factory bean.
+   *
+   * @param mapperInterface
+   *          the mapper interface
+   */
   public MapperFactoryBean(Class<T> mapperInterface) {
     this.mapperInterface = mapperInterface;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void checkDaoConfig() {
     super.checkDaoConfig();
 
     notNull(this.mapperInterface, "Property 'mapperInterface' is required");
 
-    Configuration configuration = getSqlSession().getConfiguration();
+    var configuration = getSqlSession().getConfiguration();
     if (this.addToConfig && !configuration.hasMapper(this.mapperInterface)) {
       try {
         configuration.addMapper(this.mapperInterface);
@@ -87,25 +95,16 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public T getObject() throws Exception {
     return getSqlSession().getMapper(this.mapperInterface);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public Class<T> getObjectType() {
     return this.mapperInterface;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public boolean isSingleton() {
     return true;

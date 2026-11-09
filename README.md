@@ -1,24 +1,19 @@
 MyBatis Spring Adapter
 ======================
 
-[![Build Status](https://travis-ci.org/mybatis/spring.svg?branch=master)](https://travis-ci.org/mybatis/spring)
+[![Java CI](https://github.com/mybatis/spring/actions/workflows/ci.yaml/badge.svg)](https://github.com/mybatis/spring/actions/workflows/ci.yaml)
 [![Coverage Status](https://coveralls.io/repos/mybatis/spring/badge.svg?branch=master&service=github)](https://coveralls.io/github/mybatis/spring?branch=master)
-[![Maven central](https://maven-badges.herokuapp.com/maven-central/org.mybatis/mybatis-spring/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.mybatis/mybatis-spring)
-[![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.mybatis/mybatis-spring.svg)](https://oss.sonatype.org/content/repositories/snapshots/org/mybatis/mybatis-spring/)
-[![License](http://img.shields.io/:license-apache-brightgreen.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![Maven Central](https://img.shields.io/maven-central/v/org.mybatis/mybatis-spring.svg)](https://central.sonatype.com/artifact/org.mybatis/mybatis-spring)
+[![Docs](https://img.shields.io/badge/docs-mybatis.org-blue?logo=github)](https://mybatis.org/spring/)
+[![License](https://img.shields.io/:license-apache-brightgreen.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
-![mybatis-spring](http://mybatis.github.io/images/mybatis-logo.png)
+![mybatis-spring](https://mybatis.org/images/mybatis-logo.png)
 
-MyBatis-Spring adapter is an easy-to-use Spring bridge for MyBatis sql mapping framework.
+MyBatis-Spring adapter is an easy-to-use [Spring Framework](https://github.com/spring-projects/spring-framework) bridge for [MyBatis](https://github.com/mybatis/mybatis-3) sql mapping framework.
 
 Supported Versions
 ------------------
 
-- 1.3.x - Continued support for Java 6 and 7
-- master (2.0.x) - Support for Java 8, Spring 5, and Junit 5 plus other java 8 requirements
-
-Essentials
-----------
-
-* [See the published docs](http://mybatis.github.io/spring/)
-* [See the snapshot docs](src/site/markdown) (Note: may contain explanation of unreleased features)
+- master - Support for Spring 7 and Spring Batch 6
+- 3.0.x - Support for Spring 6 and Spring Batch 5
+- 2.1.x - Maintenance for Spring 5 and Spring Batch 4

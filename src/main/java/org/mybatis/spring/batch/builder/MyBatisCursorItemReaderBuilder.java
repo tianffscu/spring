@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@ package org.mybatis.spring.batch.builder;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.batch.MyBatisCursorItemReader;
@@ -25,7 +26,12 @@ import org.mybatis.spring.batch.MyBatisCursorItemReader;
  * A builder for the {@link MyBatisCursorItemReader}.
  *
  * @author Kazuki Shimizu
+ *
+ * @param <T>
+ *          the generic type
+ *
  * @since 2.0.0
+ *
  * @see MyBatisCursorItemReader
  */
 public class MyBatisCursorItemReaderBuilder<T> {
@@ -33,6 +39,7 @@ public class MyBatisCursorItemReaderBuilder<T> {
   private SqlSessionFactory sqlSessionFactory;
   private String queryId;
   private Map<String, Object> parameterValues;
+  private Supplier<Map<String, Object>> parameterValuesSupplier;
   private Boolean saveState;
   private Integer maxItemCount;
 
@@ -41,7 +48,9 @@ public class MyBatisCursorItemReaderBuilder<T> {
    *
    * @param sqlSessionFactory
    *          the {@link SqlSessionFactory} to be used by writer for database access
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisCursorItemReader#setSqlSessionFactory(SqlSessionFactory)
    */
   public MyBatisCursorItemReaderBuilder<T> sqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
@@ -54,7 +63,9 @@ public class MyBatisCursorItemReaderBuilder<T> {
    *
    * @param queryId
    *          the id for the query
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisCursorItemReader#setQueryId(String)
    */
   public MyBatisCursorItemReaderBuilder<T> queryId(String queryId) {
@@ -67,7 +78,9 @@ public class MyBatisCursorItemReaderBuilder<T> {
    *
    * @param parameterValues
    *          the parameter values to be used for the query execution
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisCursorItemReader#setParameterValues(Map)
    */
   public MyBatisCursorItemReaderBuilder<T> parameterValues(Map<String, Object> parameterValues) {
@@ -76,13 +89,33 @@ public class MyBatisCursorItemReaderBuilder<T> {
   }
 
   /**
-   * Configure if the state of the {@link org.springframework.batch.item.ItemStreamSupport} should be persisted within
-   * the {@link org.springframework.batch.item.ExecutionContext} for restart purposes.
+   * Set the parameter supplier to be used to get parameters for the query execution.
+   *
+   * @param parameterValuesSupplier
+   *          the parameter supplier to be used to get parameters for the query execution
+   *
+   * @return this instance for method chaining
+   *
+   * @see MyBatisCursorItemReader#setParameterValuesSupplier(Supplier)
+   *
+   * @since 2.1.0
+   */
+  public MyBatisCursorItemReaderBuilder<T> parameterValuesSupplier(
+      Supplier<Map<String, Object>> parameterValuesSupplier) {
+    this.parameterValuesSupplier = parameterValuesSupplier;
+    return this;
+  }
+
+  /**
+   * Configure if the state of the {@link org.springframework.batch.infrastructure.item.ItemStreamSupport} should be
+   * persisted within the {@link org.springframework.batch.infrastructure.item.ExecutionContext} for restart purposes.
    *
    * @param saveState
    *          defaults to true
+   *
    * @return The current instance of the builder.
-   * @see org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader#setSaveState(boolean)
+   *
+   * @see org.springframework.batch.infrastructure.item.support.AbstractItemCountingItemStreamItemReader#setSaveState(boolean)
    */
   public MyBatisCursorItemReaderBuilder<T> saveState(boolean saveState) {
     this.saveState = saveState;
@@ -94,8 +127,10 @@ public class MyBatisCursorItemReaderBuilder<T> {
    *
    * @param maxItemCount
    *          the max items to be read
+   *
    * @return The current instance of the builder.
-   * @see org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader#setMaxItemCount(int)
+   *
+   * @see org.springframework.batch.infrastructure.item.support.AbstractItemCountingItemStreamItemReader#setMaxItemCount(int)
    */
   public MyBatisCursorItemReaderBuilder<T> maxItemCount(int maxItemCount) {
     this.maxItemCount = maxItemCount;
@@ -108,10 +143,11 @@ public class MyBatisCursorItemReaderBuilder<T> {
    * @return the reader
    */
   public MyBatisCursorItemReader<T> build() {
-    MyBatisCursorItemReader<T> reader = new MyBatisCursorItemReader<>();
+    var reader = new MyBatisCursorItemReader<T>();
     reader.setSqlSessionFactory(this.sqlSessionFactory);
     reader.setQueryId(this.queryId);
     reader.setParameterValues(this.parameterValues);
+    reader.setParameterValuesSupplier(this.parameterValuesSupplier);
     Optional.ofNullable(this.saveState).ifPresent(reader::setSaveState);
     Optional.ofNullable(this.maxItemCount).ifPresent(reader::setMaxItemCount);
     return reader;

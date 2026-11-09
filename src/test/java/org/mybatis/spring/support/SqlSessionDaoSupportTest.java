@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -48,7 +48,7 @@ class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
 
   @Test
   void testWithSqlSessionTemplate() {
-    SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+    var sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
     sqlSessionDaoSupport.setSqlSessionTemplate(sessionTemplate);
     sqlSessionDaoSupport.afterPropertiesSet();
 
@@ -66,7 +66,7 @@ class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
 
   @Test
   void testWithBothFactoryAndTemplate() {
-    SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+    var sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
     sqlSessionDaoSupport.setSqlSessionTemplate(sessionTemplate);
     sqlSessionDaoSupport.setSqlSessionFactory(sqlSessionFactory);
     sqlSessionDaoSupport.afterPropertiesSet();
@@ -98,7 +98,7 @@ class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
   private void setupContext() {
     applicationContext = new GenericApplicationContext();
 
-    GenericBeanDefinition definition = new GenericBeanDefinition();
+    var definition = new GenericBeanDefinition();
     definition.setBeanClass(MockSqlSessionDao.class);
     applicationContext.registerBeanDefinition("dao", definition);
 
@@ -114,7 +114,7 @@ class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
   }
 
   private void setupSqlSessionFactory(String name) {
-    GenericBeanDefinition definition = new GenericBeanDefinition();
+    var definition = new GenericBeanDefinition();
     definition.setBeanClass(SqlSessionFactoryBean.class);
     definition.getPropertyValues().add("dataSource", dataSource);
 
